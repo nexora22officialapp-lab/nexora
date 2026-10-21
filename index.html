@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#010208">
+<title>NEXORA 2.2 — Open Library Edition</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --primary-glow: #4082ff;
+  --accent-glow: #00e5ff;
+  --bg-gradient: radial-gradient(circle at 50% 50%, #0d1638 0%, #06091d 40%, #010208 85%, #000 100%);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #010208;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: white;
+}
+
+#universe {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg-gradient);
+  transition: background 0.6s ease;
+  z-index: 100;
+  touch-action: none;
+  cursor: grab;
+}
+
+#universe:active {
+  cursor: grabbing;
+}
+
+#stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+.nebula-core {
+  position: absolute;
+  width: 100vw;
+  height: 100vw;
+  max-width: 650px;
+  max-height: 650px;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(64,130,255,0.2) 0%, rgba(120,50,255,0.08) 40%, transparent 70%);
+  pointer-events: none;
+  animation: corePulse 7s ease-in-out infinite alternate;
+}
+
+.nebula-flare {
+  position: absolute;
+  width: 70vw;
+  height: 70vw;
+  max-width: 450px;
+  max-height: 450px;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,255,0.14) 0%, rgba(70,100,255,0.04) 50%, transparent 80%);
+  pointer-events: none;
+  animation: flareShift 10s ease-in-out infinite alternate-reverse;
+}
+
+#intro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  animation: cinematicIntro 1.4s cubic-bezier(0.16,1,0.3,1) forwards;
+  animation-delay: 0.2s;
+  z-index: 105;
+}
+
+.orbit-ring-outer {
+  position: absolute;
+  width: 290px;
+  height: 290px;
+  max-width: 82vw;
+  max-height: 82vw;
+  border: 1px solid rgba(130,200,255,0.15);
+  border-radius: 50%;
+  box-shadow: 0 0 70px rgba(48,120,255,0.1);
+  animation: spinClockwise 30s linear infinite;
+}
+
+.orbit-ring-inner {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  max-width: 64vw;
+  max-height: 64vw;
+  border: 1px dashed rgba(175,140,255,0.2);
+  border-radius: 50%;
+  animation: spinCounterClockwise 20s linear infinite;
+}
+
+.orbit-ring-inner::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  left: 10%;
+  top: 10%;
+  border-radius: 50%;
+  background: #a8dfff;
+  box-shadow: 0 0 20px #75aaff, 0 0 35px white;
+}
+
+.logo {
+  position: relative;
+  z-index: 2;
+  font-size: clamp(38px,10vw,68px);
+  font-weight: 300;
+  letter-spacing: clamp(5px,2vw,14px);
+  white-space: nowrap;
+  background: linear-gradient(110deg, #fff 15%, #bce2ff 42%, #fff 55%, #d1c5ff 85%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 30px rgba(100,175,255,0.75));
+  animation: logoShine 6s linear infinite;
+}
+
+.version {
+  margin-top: 18px;
+  font-size: 9px;
+  letter-spacing: 10px;
+  color: #a5c5f3;
+  text-indent: 10px;
+  opacity: 0.9;
+}
+
+.rule {
+  width: 0;
+  height: 1px;
+  margin-top: 26px;
+  background: linear-gradient(90deg, transparent, #8cdfff, #b8abff, transparent);
+  animation: ruleOpen 1.6s cubic-bezier(0.16,1,0.3,1) forwards;
+  animation-delay: 1s;
+}
+
+.tagline {
+  margin-top: 20px;
+  font-size: 9px;
+  letter-spacing: 6px;
+  color: #8c9ecf;
+  opacity: 0;
+  animation: textAppear 1s ease forwards;
+  animation-delay: 1.6s;
+}
+
+#credit {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  width: 100%;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 3.5px;
+  color: #93a4cb;
+  opacity: 0;
+  animation: textAppear 1s ease forwards;
+  animation-delay: 2s;
+  z-index: 105;
+}
+
+#intro.exit { animation: smoothIntroOut 1s cubic-bezier(0.22,1,0.36,1) forwards; }
+#credit.exit { animation: smoothCreditOut 0.8s ease forwards; }
+
+#universe.blackout { background: #000; }
+#universe.blackout #stars, #universe.blackout .nebula-core, #universe.blackout .nebula-flare { opacity: 0; }
+
+/* APP INTERFACE */
+#app-interface {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #010208;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease;
+}
+
+#app-interface.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(6, 9, 29, 0.9);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.topbar-title {
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--accent-glow);
+  font-weight: 500;
+}
+
+.app-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  max-width: 750px;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 90px;
+}
+
+.card {
+  background: rgba(13, 22, 56, 0.55);
+  border: 1px solid rgba(140, 223, 255, 0.2);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.card h2 {
+  font-size: 16px;
+  color: #fff;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.card p {
+  font-size: 12px;
+  color: #93a4cb;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.btn-action {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.btn-action:active { transform: scale(0.97); }
+
+.level-select {
+  background: #060b20;
+  color: var(--accent-glow);
+  border: 1px solid rgba(140,223,255,0.3);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.theme-card {
+  background: rgba(6, 11, 32, 0.8);
+  border: 1px solid rgba(140,223,255,0.25);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.theme-card:hover { border-color: var(--accent-glow); transform: translateY(-2px); }
+.theme-preview {
+  width: 100%;
+  height: 36px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.theme-name {
+  font-size: 11px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+}
+
+/* TOOLS GRID */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.tool-card {
+  background: rgba(13, 22, 56, 0.7);
+  border: 1px solid rgba(140,223,255,0.25);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tool-card:hover { border-color: var(--accent-glow); transform: translateY(-2px); }
+.tool-icon { font-size: 24px; margin-bottom: 8px; }
+.tool-title { font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 4px; }
+.tool-desc { font-size: 10px; color: #8c9ecf; }
+
+/* FULLSCREEN OVERLAY */
+#fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: #010208;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+#fullscreen-overlay.active {
+  display: flex;
+}
+
+.overlay-header {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.overlay-title-bar {
+  font-size: 15px;
+  color: var(--accent-glow);
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.overlay-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.fs-canvas {
+  background: #02040c;
+  border: 2px solid rgba(140, 223, 255, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 0 30px rgba(64,130,255,0.25);
+  max-width: 100%;
+  touch-action: none;
+}
+
+.ttt-grid-fs {
+  display: grid;
+  grid-template-columns: repeat(3, 85px);
+  grid-template-rows: repeat(3, 85px);
+  gap: 10px;
+}
+.ttt-cell-fs {
+  background: rgba(13, 22, 56, 0.85);
+  border: 2px solid rgba(140, 223, 255, 0.4);
+  border-radius: 12px;
+  font-size: 36px;
+  font-weight: bold;
+  color: var(--accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mm-grid-fs {
+  display: grid;
+  grid-template-columns: repeat(4, 70px);
+  gap: 10px;
+}
+.mm-card-fs {
+  width: 70px;
+  height: 70px;
+  background: rgba(13, 22, 56, 0.85);
+  border: 2px solid rgba(140, 223, 255, 0.4);
+  border-radius: 12px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  grid-template-rows: repeat(2, 50px);
+  gap: 6px;
+  margin-top: 5px;
+}
+.dpad-btn {
+  background: rgba(13, 22, 56, 0.9);
+  border: 1px solid rgba(140, 223, 255, 0.4);
+  color: var(--accent-glow);
+  font-size: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.time-display-box {
+  background: rgba(13, 22, 56, 0.85);
+  border: 2px solid var(--accent-glow);
+  border-radius: 20px;
+  padding: 24px 36px;
+  text-align: center;
+  box-shadow: 0 0 35px rgba(0, 229, 255, 0.25);
+  min-width: 280px;
+}
+
+.timer-digits {
+  font-size: 48px;
+  font-weight: bold;
+  font-family: monospace;
+  color: #ffffff;
+  text-shadow: 0 0 20px var(--accent-glow);
+  letter-spacing: 2px;
+}
+
+/* CALCULATOR & NOTEPAD STYLES */
+.calc-display {
+  width: 100%;
+  background: #02040c;
+  border: 2px solid rgba(140,223,255,0.4);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 28px;
+  font-family: monospace;
+  color: var(--accent-glow);
+  text-align: right;
+  margin-bottom: 10px;
+}
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.calc-btn {
+  background: rgba(13, 22, 56, 0.9);
+  border: 1px solid rgba(140,223,255,0.3);
+  color: #fff;
+  font-size: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.calc-btn:active { background: var(--primary-glow); }
+
+/* 4-WAY BOTTOM NAVIGATION BAR */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 65px;
+  background: rgba(4, 7, 20, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #8c9ecf;
+  cursor: pointer;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+.nav-item.active, .nav-item:hover { color: var(--accent-glow); }
+.nav-item span:first-child { font-size: 16px; margin-bottom: 2px; }
+
+.view-section { display: none; }
+.view-section.active { display: block; }
+
+@keyframes smoothIntroOut { from { opacity: 1; transform: scale(1); filter: blur(0); } to { opacity: 0; transform: scale(0.97); filter: blur(3px); visibility: hidden; } }
+@keyframes smoothCreditOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+@keyframes cinematicIntro { from { opacity: 0; transform: scale(0.94); filter: blur(4px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+@keyframes logoShine { from { background-position: 200% center; } to { background-position: -20% center; } }
+@keyframes ruleOpen { to { width: min(280px,80vw); } }
+@keyframes textAppear { to { opacity: 1; } }
+@keyframes corePulse { 0% { transform: translate(-50%,-50%) scale(0.92); opacity: 0.75; } 100% { transform: translate(-50%,-50%) scale(1.12); opacity: 1; } }
+@keyframes flareShift { 0% { transform: translate(-50%,-50%) scale(1) rotate(0deg); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(1.15) rotate(180deg); opacity: 0.9; } }
+@keyframes spinClockwise { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes spinCounterClockwise { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+</style>
+</head>
+
+<body>
+<div id="universe">
+  <canvas id="stars"></canvas>
+  <div class="nebula-core"></div>
+  <div class="nebula-flare"></div>
+
+  <main id="intro">
+    <div class="orbit-ring-outer"></div>
+    <div class="orbit-ring-inner"></div>
+    <h1 class="logo">NEXORA 2.2</h1>
+    <div class="version">OPEN LIBRARY EDITION</div>
+    <div class="rule"></div>
+    <div class="tagline">BEYOND INFINITY</div>
+  </main>
+
+  <footer id="credit">MADE BY ARYA VARAMURTHI <span>♥</span></footer>
+</div>
+
+<!-- FULLSCREEN APP / GAME OVERLAY -->
+<div id="fullscreen-overlay">
+  <div class="overlay-header">
+    <span class="overlay-title-bar" id="fsTitle">EXPLORER</span>
+    <button class="btn-action" onclick="closeFullscreen()" style="background: #ff4757; padding: 8px 14px;">✕ Exit</button>
+  </div>
+  <div class="overlay-body" id="fsBody"></div>
+</div>
+
+<!-- PREMIUM APP DASHBOARD -->
+<div id="app-interface">
+  <div class="app-topbar">
+    <span class="topbar-title">NEXORA 2.2</span>
+    <span style="font-size: 10px; color: var(--accent-glow);" id="streakDisplay">🔥 1 Day Streak</span>
+  </div>
+
+  <div class="app-content">
+    <!-- VIEW 1: LEARN ENGLISH & OPEN LIBRARY -->
+    <div id="view-learn" class="view-section active">
+      <div class="card">
+        <h2>🦉 Duolingo English Learning Portal</h2>
+        <p>Access your English learning course and daily exercises directly through the gateway.</p>
+        <a href="https://www.duolingo.com/course/en/en/Learn-English" target="_blank" class="btn-action" onclick="recordStudySession()">Launch Duolingo</a>
+      </div>
+
+      <div class="card" style="background: linear-gradient(135deg, rgba(13,38,30,0.85), rgba(0,229,255,0.25)); border: 2px solid #00e5ff;">
+        <h2>📚 Open Library (Free Book Reader)</h2>
+        <p>Search, borrow, and read millions of free eBooks and literature instantly in full screen!</p>
+        <button class="btn-action" onclick="launchFullscreenTool('openlibrary')" style="background: linear-gradient(135deg, #2ed573, #00e5ff); font-size: 13px; padding: 12px 22px;">📚 Open Open Library</button>
+      </div>
+
+      <div class="card">
+        <h2>📖 Daily English Study Habit</h2>
+        <p>Mark today's study session complete to keep your cosmic streak alive!</p>
+        <button class="btn-action" onclick="recordStudySession()" style="background: linear-gradient(135deg, #2ed573, #00e5ff);">✓ Complete Today's Session</button>
+      </div>
+    </div>
+
+    <!-- VIEW 2: GAMES ZONE -->
+    <div id="view-games" class="view-section">
+      <div class="card" style="background: linear-gradient(135deg, rgba(40,13,56,0.85), rgba(180,40,180,0.45)); border: 2px solid #a855f7;">
+        <h2>⏱️ Precision Time Stopper Challenge</h2>
+        <p>Test your reflexes! Stop the clock at exactly 5.00s, 10.00s, or 15.00s!</p>
+        <button class="btn-action" onclick="launchFullscreenTool('timestopper')" style="background: linear-gradient(135deg, #a855f7, #00e5ff); font-size: 13px; padding: 12px 22px;">⚡ Play Time Stopper</button>
+      </div>
+
+      <div class="card">
+        <h2>🧱 Neon Breaker</h2>
+        <p>Bounce a ball, break glowing blocks, and slide left/right with paddle controls.</p>
+        <button class="btn-action" onclick="launchFullscreenTool('breaker')">▶ Play Fullscreen</button>
+      </div>
+
+      <div class="card">
+        <h2>❌ Tic-Tac-Toe</h2>
+        <p>Play against intelligent AI modes in glowing neon style.</p>
+        <button class="btn-action" onclick="launchFullscreenTool('ttt')">▶ Play Fullscreen</button>
+      </div>
+
+      <div class="card">
+        <h2>🧠 Memory Match</h2>
+        <p>Flip cards, find matching cosmic pairs, and beat your best time.</p>
+        <button class="btn-action" onclick="launchFullscreenTool('memory')">▶ Play Fullscreen</button>
+      </div>
+
+      <div class="card">
+        <h2>👾 Galaxy Invaders</h2>
+        <p>Defend your spaceship from waves of alien enemies.</p>
+        <button class="btn-action" onclick="launchFullscreenTool('invaders')">▶ Play Fullscreen</button>
+      </div>
+
+      <div class="card">
+        <h2>🦅 Bird Fly Game</h2>
+        <p>Tap or click to flap your wings, dodge glowing cosmic pipes, and fly across levels.</p>
+        <button class="btn-action" onclick="launchFullscreenTool('bird')">▶ Play Fullscreen</button>
+      </div>
+
+      <div class="card">
+        <h2>🐍 Snake Game</h2>
+        <p>Eat glowing energy pellets, grow your snake, and avoid walls.</p>
+        <button class="btn-action" onclick="launchFullscreenTool('snake')">▶ Play Fullscreen</button>
+      </div>
+    </div>
+
+    <!-- VIEW 3: TOOLS & COMMAND CENTER -->
+    <div id="view-command" class="view-section">
+      <div class="card">
+        <h2>🛰️ NEXORA Useful Fullscreen Tools</h2>
+        <p>Tap any tool to launch it instantly in fullscreen mode:</p>
+
+        <div class="tools-grid">
+          <div class="tool-card" onclick="launchFullscreenTool('liveclock')">
+            <div class="tool-icon">🕒</div>
+            <div class="tool-title">Live Time & Clock</div>
+            <div class="tool-desc">Digital clock & stopwatch</div>
+          </div>
+          <div class="tool-card" onclick="launchFullscreenTool('calculator')">
+            <div class="tool-icon">🧮</div>
+            <div class="tool-title">Advanced Calculator</div>
+            <div class="tool-desc">+, -, *, /, √ operations</div>
+          </div>
+          <div class="tool-card" onclick="launchFullscreenTool('notepad')">
+            <div class="tool-icon">📝</div>
+            <div class="tool-title">Quick Notepad</div>
+            <div class="tool-desc">Auto-saving text editor</div>
+          </div>
+          <div class="tool-card" onclick="launchFullscreenTool('oracle')">
+            <div class="tool-icon">🔮</div>
+            <div class="tool-title">Cosmic Oracle</div>
+            <div class="tool-desc">Magic 8-ball answers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: SETTINGS & ALL COSMIC COLORS -->
+    <div id="view-settings" class="view-section">
+      <div class="card">
+        <h2>🎨 Cosmic Color Spectrum & Design Themes</h2>
+        <p>Click any theme card to instantly transform your universe color palette:</p>
+        
+        <div class="settings-grid">
+          <div class="theme-card" onclick="setTheme('#4082ff', '#00e5ff', 'radial-gradient(circle at 50% 50%, #0d1638 0%, #06091d 40%, #010208 85%, #000 100%)')">
+            <div class="theme-preview" style="background: radial-gradient(circle, #00e5ff 0%, #4082ff 50%, #0d1638 100%);"></div>
+            <div class="theme-name">Cyber Blue</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('#ff4b2b', '#ff416c', 'radial-gradient(circle at 50% 50%, #380d0d 0%, #1d0606 40%, #080101 85%, #000 100%)')">
+            <div class="theme-preview" style="background: radial-gradient(circle, #ff416c 0%, #ff4b2b 50%, #380d0d 100%);"></div>
+            <div class="theme-name">Supernova Red</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('#00b09b', '#96c93d', 'radial-gradient(circle at 50% 50%, #0d3826 0%, #061d13 40%, #010805 85%, #000 100%)')">
+            <div class="theme-preview" style="background: radial-gradient(circle, #96c93d 0%, #00b09b 50%, #0d3826 100%);"></div>
+            <div class="theme-name">Nebula Green</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('#a855f7', '#ec4899', 'radial-gradient(circle at 50% 50%, #290d38 0%, #14061d 40%, #040108 85%, #000 100%)')">
+            <div class="theme-preview" style="background: radial-gradient(circle, #ec4899 0%, #a855f7 50%, #290d38 100%);"></div>
+            <div class="theme-name">Amethyst Void</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('#f59e0b', '#fbbf24', 'radial-gradient(circle at 50% 50%, #38260d 0%, #1d1306 40%, #080501 85%, #000 100%)')">
+            <div class="theme-preview" style="background: radial-gradient(circle, #fbbf24 0%, #f59e0b 50%, #38260d 100%);"></div>
+            <div class="theme-name">Solar Gold</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('#64748b', '#94a3b8', 'radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 40%, #020617 85%, #000 100%)')">
+            <div class="theme-preview" style="background: radial-gradient(circle, #94a3b8 0%, #64748b 50%, #1e293b 100%);"></div>
+            <div class="theme-name">Titanium Dark</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🛠️ Advanced System Preferences</h2>
+        <div class="setting-row">
+          <span>🔔 Daily Learning Reminders</span>
+          <button class="btn-action" onclick="toggleNotifications()" id="notif-btn" style="padding: 6px 12px; font-size: 10px;">Enable</button>
+        </div>
+        <div class="setting-row">
+          <span>✨ Starfield Animation Speed</span>
+          <select id="speed-setting" onchange="updateStarSpeed(this.value)" style="background:#060b20; color:#fff; border:1px solid rgba(140,223,255,0.3); padding:4px 8px; border-radius:6px; font-size:11px; outline:none;">
+            <option value="normal">Normal</option>
+            <option value="fast">Hyper Warp</option>
+            <option value="still">Paused</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <span>🧹 Clear Local Data & Cache</span>
+          <button class="btn-action" onclick="resetAppData()" style="background: #ff4757; padding: 6px 12px; font-size: 10px;">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4-WAY BOTTOM NAVIGATION BAR -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchNavTab('learn', this)">
+      <span>🦉</span>
+      <span>Learn</span>
+    </button>
+    <button class="nav-item" onclick="switchNavTab('games', this)">
+      <span>🪐</span>
+      <span>Games</span>
+    </button>
+    <button class="nav-item" onclick="switchNavTab('command', this)">
+      <span>🛰️</span>
+      <span>Tools</span>
+    </button>
+    <button class="nav-item" onclick="switchNavTab('settings', this)">
+      <span>⚙️</span>
+      <span>Settings</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+let studyStreak = parseInt(localStorage.getItem('nexora_streak') || '1');
+document.getElementById('streakDisplay').innerText = `🔥 ${studyStreak} Day Streak`;
+
+function recordStudySession() {
+  studyStreak++;
+  localStorage.setItem('nexora_streak', studyStreak);
+  document.getElementById('streakDisplay').innerText = `🔥 ${studyStreak} Day Streak`;
+  alert("🎉 Awesome! Study session recorded. Keep up the amazing work!");
+}
+
+function toggleNotifications() {
+  if (!("Notification" in window)) {
+    alert("This browser does not support notifications.");
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+      document.getElementById('notif-btn').innerText = "Active";
+      alert("✅ Success! Daily reminders enabled.");
+    }
+  });
+}
+
+let globalSpeedMultiplier = 1;
+function updateStarSpeed(val) {
+  if (val === 'normal') globalSpeedMultiplier = 1;
+  if (val === 'fast') globalSpeedMultiplier = 2.5;
+  if (val === 'still') globalSpeedMultiplier = 0;
+}
+
+function resetAppData() {
+  if (confirm("Clear all local data?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function switchNavTab(viewId, btnElement) {
+  document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`view-${viewId}`).classList.add('active');
+  if (btnElement) btnElement.classList.add('active');
+}
+
+function setTheme(primary, accent, gradient) {
+  document.documentElement.style.setProperty('--primary-glow', primary);
+  document.documentElement.style.setProperty('--accent-glow', accent);
+  document.documentElement.style.setProperty('--bg-gradient', gradient);
+  alert('✨ Cosmic theme applied successfully!');
+}
+
+let activeInterval = null;
+
+function closeFullscreen() {
+  clearInterval(activeInterval);
+  document.getElementById('fullscreen-overlay').classList.remove('active');
+}
+
+function launchFullscreenTool(type) {
+  const overlay = document.getElementById('fullscreen-overlay');
+  const titleBar = document.getElementById('fsTitle');
+  const body = document.getElementById('fsBody');
+  overlay.classList.add('active');
+  body.innerHTML = '';
+  clearInterval(activeInterval);
+
+  if (type === 'openlibrary') {
+    titleBar.innerText = "📚 OPEN LIBRARY READER";
+    body.innerHTML = `
+      <p style="font-size:12px; color:#8c9ecf; text-align:center; margin-bottom:4px;">Search and read books for free on Open Library:</p>
+      <iframe src="https://openlibrary.org/" style="width:100%; height:calc(100vh - 120px); border:2px solid rgba(140,223,255,0.4); border-radius:14px; background:#fff;"></iframe>
+    `;
+  }
+  else if (type === 'timestopper') {
+    titleBar.innerText = "⏱️ EXACT TIME STOPPER";
+    body.innerHTML = `
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span style="font-size:12px; color:#8c9ecf;">Select Target:</span>
+        <select id="targetTimeSelect" class="level-select" style="margin:0;" onchange="setTargetTime(this.value)">
+          <option value="5.00">5.00 Sec</option>
+          <option value="10.00" selected>10.00 Sec</option>
+          <option value="15.00">15.00 Sec</option>
+        </select>
+      </div>
+
+      <div class="time-display-box">
+        <div style="font-size:12px; color:var(--accent-glow); margin-bottom:6px; letter-spacing:1px;" id="targetLabel">TARGET: 10.00 SECONDS</div>
+        <div class="timer-digits" id="timerDigits">0.000</div>
+      </div>
+
+      <div style="font-size:13px; color:#2ed573; height:20px; font-weight:600; text-align:center;" id="timeStopperResult"></div>
+
+      <div style="display:flex; gap:12px; margin-top:8px;">
+        <button class="btn-action" id="timeStartStopBtn" onclick="toggleTimeStopper()" style="background:linear-gradient(135deg, #a855f7, #00e5ff); padding:16px 32px; font-size:16px;">▶ START</button>
+        <button class="btn-action" onclick="resetTimeStopper()" style="background:#ff4757; padding:16px 24px; font-size:14px;">🔄 RESET</button>
+      </div>
+    `;
+    resetTimeStopper();
+  }
+  else if (type === 'liveclock') {
+    titleBar.innerText = "🕒 LIVE CLOCK & TIME";
+    body.innerHTML = `
+      <div class="time-display-box">
+        <div style="font-size:12px; color:var(--accent-glow); margin-bottom:6px;">CURRENT LOCAL TIME</div>
+        <div class="timer-digits" id="fsClockDigits">00:00:00</div>
+      </div>
+      <div style="font-size:12px; color:#8c9ecf;" id="fsDateString">--</div>
+    `;
+    updateFSClock();
+    activeInterval = setInterval(updateFSClock, 1000);
+  }
+  else if (type === 'calculator') {
+    titleBar.innerText = "🧮 ADVANCED CALCULATOR";
+    body.innerHTML = `
+      <div class="calc-display" id="calcScreen">0</div>
+      <div class="calc-grid">
+        <button class="calc-btn" onclick="calcClear()">C</button>
+        <button class="calc-btn" onclick="calcSqrt()">√</button>
+        <button class="calc-btn" onclick="calcPress('/')">/</button>
+        <button class="calc-btn" onclick="calcPress('*')">×</button>
+        <button class="calc-btn" onclick="calcPress('7')">7</button>
+        <button class="calc-btn" onclick="calcPress('8')">8</button>
+        <button class="calc-btn" onclick="calcPress('9')">9</button>
+        <button class="calc-btn" onclick="calcPress('-')">-</button>
+        <button class="calc-btn" onclick="calcPress('4')">4</button>
+        <button class="calc-btn" onclick="calcPress('5')">5</button>
+        <button class="calc-btn" onclick="calcPress('6')">6</button>
+        <button class="calc-btn" onclick="calcPress('+')">+</button>
+        <button class="calc-btn" onclick="calcPress('1')">1</button>
+        <button class="calc-btn" onclick="calcPress('2')">2</button>
+        <button class="calc-btn" onclick="calcPress('3')">3</button>
+        <button class="calc-btn" onclick="calcEval()" style="background:var(--primary-glow); grid-row: span 2;">=</button>
+        <button class="calc-btn" onclick="calcPress('0')" style="grid-column: span 2;">0</button>
+        <button class="calc-btn" onclick="calcPress('.')">.</button>
+      </div>
+    `;
+  }
+  else if (type === 'notepad') {
+    titleBar.innerText = "📝 QUICK NOTEPAD";
+    let savedNote = localStorage.getItem('nexora_notepad_fs') || '';
+    body.innerHTML = `
+      <p style="font-size:12px; color:#8c9ecf; text-align:center;">Your notes are auto-saved in real-time as you type.</p>
+      <textarea id="fsNotepadArea" oninput="saveFSNotepad(this.value)" placeholder="Type your thoughts, notes, or ideas here..." style="width:100%; height:280px; background:#02040c; border:2px solid rgba(140,223,255,0.4); border-radius:14px; padding:14px; color:#fff; font-size:14px; outline:none; resize:none;">${savedNote}</textarea>
+    `;
+  }
+  else if (type === 'oracle') {
+    titleBar.innerText = "🔮 COSMIC ORACLE";
+    body.innerHTML = `
+      <div class="time-display-box" style="padding: 30px;">
+        <div style="font-size:14px; color:var(--accent-glow); margin-bottom:12px;" id="oracleResult">Ask a question mentally & click below!</div>
+      </div>
+      <button class="btn-action" onclick="consultOracle()" style="padding:14px 28px; font-size:14px;">Consult Oracle</button>
+    `;
+  }
+  else if(type === 'breaker') {
+    titleBar.innerText = "🧱 NEON BREAKER";
+    body.innerHTML = `
+      <canvas id="fsBreakerCanvas" class="fs-canvas" width="300" height="280"></canvas>
+      <div style="display:flex; gap:16px; margin-top:8px;">
+        <button class="btn-action" onclick="moveFSBreakerPaddle(-25)" style="padding:14px 28px; font-size:16px;">◀ Left</button>
+        <button class="btn-action" onclick="moveFSBreakerPaddle(25)" style="padding:14px 28px; font-size:16px;">Right ▶</button>
+      </div>
+    `;
+    startFSBreaker();
+  } 
+  else if(type === 'ttt') {
+    titleBar.innerText = "❌ TIC-TAC-TOE";
+    body.innerHTML = `
+      <div id="fsTTTStatus" style="font-size:14px; color:var(--accent-glow);">Your turn (X)</div>
+      <div class="ttt-grid-fs" id="fsTTTGrid"></div>
+      <button class="btn-action" onclick="initFSTTT()">New Round</button>
+    `;
+    initFSTTT();
+  }
+  else if(type === 'memory') {
+    titleBar.innerText = "🧠 MEMORY MATCH";
+    body.innerHTML = `
+      <div id="fsMMStatus" style="font-size:14px; color:var(--accent-glow);">Matches: 0 / 6</div>
+      <div class="mm-grid-fs" id="fsMMGrid"></div>
+      <button class="btn-action" onclick="initFSMM()">Restart Game</button>
+    `;
+    initFSMM();
+  }
+  else if(type === 'invaders') {
+    titleBar.innerText = "👾 GALAXY INVADERS";
+    body.innerHTML = `
+      <canvas id="fsInvadersCanvas" class="fs-canvas" width="300" height="260"></canvas>
+      <div style="display:flex; gap:12px; margin-top:5px;">
+        <button class="btn-action" onclick="moveFSInvaders(-20)" style="padding:12px 20px;">◀ Left</button>
+        <button class="btn-action" onclick="fireFSInvadersLaser()" style="padding:12px 20px;">Fire ⚡</button>
+        <button class="btn-action" onclick="moveFSInvaders(20)" style="padding:12px 20px;">Right ▶</button>
+      </div>
+    `;
+    startFSInvaders();
+  }
+  else if(type === 'bird') {
+    titleBar.innerText = "🦅 BIRD FLY GAME";
+    body.innerHTML = `
+      <div style="font-size:13px; color:var(--accent-glow);" id="birdScore">Score: 0</div>
+      <canvas id="fsBirdCanvas" class="fs-canvas" width="280" height="260" onclick="flapFSBird()"></canvas>
+      <button class="btn-action" onclick="flapFSBird()" style="padding:14px 30px; font-size:14px;">🦅 FLAP WINGS</button>
+    `;
+    startFSBird();
+  }
+  else if(type === 'snake') {
+    titleBar.innerText = "🐍 SNAKE GAME";
+    body.innerHTML = `
+      <div style="font-size:13px; color:var(--accent-glow);" id="snakeScore">Score: 0</div>
+      <canvas id="fsSnakeCanvas" class="fs-canvas" width="260" height="220"></canvas>
+      <div class="dpad">
+        <div></div>
+        <button class="dpad-btn" onclick="setSnakeDir('UP')">⬆️</button>
+        <div></div>
+        <button class="dpad-btn" onclick="setSnakeDir('LEFT')">⬅️</button>
+        <button class="dpad-btn" onclick="setSnakeDir('DOWN')">⬇️</button>
+        <button class="dpad-btn" onclick="setSnakeDir('RIGHT')">➡️</button>
+      </div>
+    `;
+    startFSSnake();
+  }
+}
+
+/* Tool Functions */
+function updateFSClock() {
+  let now = new Date();
+  let d = document.getElementById('fsClockDigits');
+  let s = document.getElementById('fsDateString');
+  if(d) d.innerText = now.toLocaleTimeString();
+  if(s) s.innerText = now.toDateString();
+}
+
+let calcExpression = "";
+function calcPress(val) {
+  if(calcExpression === "Error") calcExpression = "";
+  calcExpression += val;
+  document.getElementById('calcScreen').innerText = calcExpression || "0";
+}
+function calcClear() {
+  calcExpression = "";
+  document.getElementById('calcScreen').innerText = "0";
+}
+function calcSqrt() {
+  try {
+    let res = Math.sqrt(eval(calcExpression || "0"));
+    document.getElementById('calcScreen').innerText = res;
+    calcExpression = res.toString();
+  } catch(e) {
+    document.getElementById('calcScreen').innerText = "Error";
+    calcExpression = "";
+  }
+}
+function calcEval() {
+  try {
+    let res = eval(calcExpression.replace('×', '*'));
+    document.getElementById('calcScreen').innerText = res;
+    calcExpression = res.toString();
+  } catch(e) {
+    document.getElementById('calcScreen').innerText = "Error";
+    calcExpression = "";
+  }
+}
+
+function saveFSNotepad(val) {
+  localStorage.setItem('nexora_notepad_fs', val);
+}
+
+function consultOracle() {
+  const ans = ["It is certain.", "Without a doubt.", "Ask again later.", "Outlook good.", "Signs point to yes.", "Very doubtful."];
+  document.getElementById('oracleResult').innerText = `Oracle says: "${ans[Math.floor(Math.random() * ans.length)]}"`;
+}
+
+/* Exact Time Stopper Game Logic */
+let timerStartTime = 0, timerRunning = false, targetTimeSec = 10.00;
+function setTargetTime(val) { targetTimeSec = parseFloat(val); resetTimeStopper(); }
+function resetTimeStopper() {
+  clearInterval(activeInterval);
+  timerRunning = false;
+  document.getElementById('timerDigits').innerText = "0.000";
+  document.getElementById('timerDigits').style.color = "#ffffff";
+  document.getElementById('timeStopperResult').innerText = "";
+  let btn = document.getElementById('timeStartStopBtn');
+  if(btn) { btn.innerText = "▶ START"; btn.style.background = "linear-gradient(135deg, #a855f7, #00e5ff)"; }
+}
+function toggleTimeStopper() {
+  let btn = document.getElementById('timeStartStopBtn');
+  let result = document.getElementById('timeStopperResult');
+  if (!timerRunning) {
+    timerRunning = true;
+    timerStartTime = performance.now();
+    btn.innerText = "⚡ STOP TIME";
+    btn.style.background = "#ff4757";
+    result.innerText = "Timing in progress...";
+    activeInterval = setInterval(() => {
+      let elapsed = (performance.now() - timerStartTime) / 1000;
+      document.getElementById('timerDigits').innerText = elapsed.toFixed(3);
+    }, 10);
+  } else {
+    timerRunning = false;
+    clearInterval(activeInterval);
+    let finalTime = parseFloat(document.getElementById('timerDigits').innerText);
+    let diff = Math.abs(finalTime - targetTimeSec);
+    btn.innerText = "▶ TRY AGAIN";
+    btn.style.background = "linear-gradient(135deg, #a855f7, #00e5ff)";
+    if (diff === 0) {
+      result.innerText = "🌟 PERFECT HIT!";
+      document.getElementById('timerDigits').style.color = "#2ed573";
+    } else if (diff <= 0.15) {
+      result.innerText = `🔥 AMAZING! Off by ${diff.toFixed(3)}s!`;
+      document.getElementById('timerDigits').style.color = "#00e5ff";
+    } else {
+      result.innerText = `❌ MISSED! Off by ${diff.toFixed(3)}s.`;
+      document.getElementById('timerDigits').style.color = "#ff4757";
+    }
+  }
+}
+
+/* Arcade Games Code */
+let fsPaddleX = 100, fsBreakerX = 150, fsBreakerY = 140, fsDx = 2.5, fsDy = -2.5, fsPaddleW = 75;
+function startFSBreaker() {
+  clearInterval(activeInterval);
+  const canvas = document.getElementById('fsBreakerCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  fsBreakerX = canvas.width / 2; fsBreakerY = canvas.height - 50; fsDx = 2.5; fsDy = -2.5;
+  fsPaddleX = (canvas.width - fsPaddleW) / 2;
+  let bricks = [];
+  for(let c=0; c<4; c++) {
+    bricks[c] = [];
+    for(let r=0; r<3; r++) bricks[c][r] = { x: 0, y: 0, status: 1 };
+  }
+  canvas.onmousemove = (e) => {
+    let rect = canvas.getBoundingClientRect();
+    let rx = e.clientX - rect.left;
+    if(rx > 0 && rx < canvas.width) fsPaddleX = rx - fsPaddleW/2;
+  };
+  activeInterval = setInterval(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for(let c=0; c<4; c++) {
+      for(let r=0; r<3; r++) {
+        if(bricks[c][r].status === 1) {
+          let bX = c * 68 + 14, bY = r * 18 + 18;
+          bricks[c][r].x = bX; bricks[c][r].y = bY;
+          ctx.fillStyle = '#00e5ff'; ctx.fillRect(bX, bY, 60, 12);
+        }
+      }
+    }
+    ctx.beginPath(); ctx.arc(fsBreakerX, fsBreakerY, 5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.closePath();
+    ctx.fillStyle = '#4082ff'; ctx.fillRect(fsPaddleX, canvas.height - 12, fsPaddleW, 8);
+    for(let c=0; c<4; c++) {
+      for(let r=0; r<3; r++) {
+        let b = bricks[c][r];
+        if(b.status === 1 && fsBreakerX > b.x && fsBreakerX < b.x + 60 && fsBreakerY > b.y && fsBreakerY < b.y + 12) {
+          fsDy = -fsDy; b.status = 0;
+        }
+      }
+    }
+    if(fsBreakerX + fsDx > canvas.width - 5 || fsBreakerX + fsDx < 5) fsDx = -fsDx;
+    if(fsBreakerY + fsDy < 5) fsDy = -fsDy;
+    else if(fsBreakerY + fsDy > canvas.height - 12) {
+      if(fsBreakerX > fsPaddleX && fsBreakerX < fsPaddleX + fsPaddleW) fsDy = -fsDy;
+      else if(fsBreakerY + fsDy > canvas.height) {
+        clearInterval(activeInterval);
+        ctx.fillStyle = '#ff4757'; ctx.font = '16px sans-serif'; ctx.fillText('GAME OVER', 95, 150);
+      }
+    }
+    fsBreakerX += fsDx; fsBreakerY += fsDy;
+  }, 20);
+}
+function moveFSBreakerPaddle(dist) {
+  const canvas = document.getElementById('fsBreakerCanvas');
+  if(!canvas) return;
+  fsPaddleX = Math.max(0, Math.min(canvas.width - fsPaddleW, fsPaddleX + dist));
+}
+
+let fstttBoard = ['', '', '', '', '', '', '', '', ''];
+let fstttTurn = 'X';
+let fstttActive = true;
+function initFSTTT() {
+  fstttBoard = ['', '', '', '', '', '', '', '', '']; fstttTurn = 'X'; fstttActive = true;
+  document.getElementById('fsTTTStatus').innerText = "Your turn (X)";
+  renderFSTTT();
+}
+function renderFSTTT() {
+  const grid = document.getElementById('fsTTTGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  fstttBoard.forEach((val, idx) => {
+    let cell = document.createElement('div');
+    cell.className = 'ttt-cell-fs'; cell.innerText = val;
+    cell.onclick = () => makeFSTTTMove(idx);
+    grid.appendChild(cell);
+  });
+}
+function makeFSTTTMove(idx) {
+  if(!fstttActive || fstttBoard[idx] !== '') return;
+  fstttBoard[idx] = fstttTurn; renderFSTTT(); checkFSTTTWinner();
+  if(fstttActive && fstttTurn === 'X') {
+    fstttTurn = 'O'; document.getElementById('fsTTTStatus').innerText = "AI thinking...";
+    setTimeout(aiFSTTTMove, 400);
+  }
+}
+function aiFSTTTMove() {
+  if(!fstttActive) return;
+  let empty = fstttBoard.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+  if(empty.length > 0) fstttBoard[empty[Math.floor(Math.random() * empty.length)]] = 'O';
+  renderFSTTT(); checkFSTTTWinner();
+  if(fstttActive) { fstttTurn = 'X'; document.getElementById('fsTTTStatus').innerText = "Your turn (X)"; }
+}
+function checkFSTTTWinner() {
+  const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(let w of wins) {
+    let [a,b,c] = w;
+    if(fstttBoard[a] && fstttBoard[a] === fstttBoard[b] && fstttBoard[a] === fstttBoard[c]) {
+      document.getElementById('fsTTTStatus').innerText = `Winner: ${fstttBoard[a]}!`;
+      fstttActive = false; return;
+    }
+  }
+  if(!fstttBoard.includes('')) { document.getElementById('fsTTTStatus').innerText = "Draw Game!"; fstttActive = false; }
+}
+
+let fsmmCards = ['🍎','🍎','🍌','🍌','🍇','🍇','⭐','⭐','🚀','🚀','💎','💎'];
+let fsmmFlipped = [], fsmmMatched = 0;
+function initFSMM() {
+  fsmmCards.sort(() => Math.random() - 0.5);
+  fsmmFlipped = []; fsmmMatched = 0;
+  document.getElementById('fsMMStatus').innerText = "Matches: 0 / 6";
+  const grid = document.getElementById('fsMMGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  fsmmCards.forEach((emoji) => {
+    let card = document.createElement('div');
+    card.className = 'mm-card-fs'; card.dataset.emoji = emoji; card.innerText = '❓';
+    card.onclick = () => {
+      if(fsmmFlipped.length >= 2 || card.innerText !== '❓' || card.dataset.matched) return;
+      card.innerText = card.dataset.emoji; fsmmFlipped.push(card);
+      if(fsmmFlipped.length === 2) {
+        let [c1, c2] = fsmmFlipped;
+        if(c1.dataset.emoji === c2.dataset.emoji) {
+          c1.dataset.matched = true; c2.dataset.matched = true; fsmmMatched++;
+          document.getElementById('fsMMStatus').innerText = `Matches: ${fsmmMatched} / 6`;
+          fsmmFlipped = [];
+          if(fsmmMatched === 6) document.getElementById('fsMMStatus').innerText = "🎉 Victory!";
+        } else {
+          setTimeout(() => { c1.innerText = '❓'; c2.innerText = '❓'; fsmmFlipped = []; }, 700);
+        }
+      }
+    };
+    grid.appendChild(card);
+  });
+}
+
+let fsInvShipX = 130, fsBullets = [], fsEnemies = [];
+function startFSInvaders() {
+  clearInterval(activeInterval);
+  const canvas = document.getElementById('fsInvadersCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  fsInvShipX = 130; fsBullets = []; fsEnemies = [];
+  for(let i=0; i<5; i++) fsEnemies.push({x: i * 50 + 20, y: 25, alive: true});
+  activeInterval = setInterval(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00e5ff'; ctx.fillRect(fsInvShipX, canvas.height - 22, 28, 12);
+    ctx.fillStyle = '#ffffff';
+    fsBullets.forEach(b => { b.y -= 6; ctx.fillRect(b.x, b.y, 3, 10); });
+    ctx.fillStyle = '#ff4b2b';
+    fsEnemies.forEach(e => { if(e.alive) ctx.fillRect(e.x, e.y, 26, 14); });
+    fsBullets.forEach((b, idx) => {
+      fsEnemies.forEach(e => {
+        if(e.alive && b.x > e.x && b.x < e.x + 26 && b.y > e.y && b.y < e.y + 14) {
+          e.alive = false; fsBullets.splice(idx, 1);
+        }
+      });
+    });
+    fsBullets = fsBullets.filter(b => b.y > 0);
+  }, 30);
+}
+function moveFSInvaders(dir) { fsInvShipX = Math.max(0, Math.min(272, fsInvShipX + dir)); }
+function fireFSInvadersLaser() { fsBullets.push({x: fsInvShipX + 12, y: 230}); }
+
+let birdY = 130, birdVelocity = 0, pipes = [], birdScore = 0;
+function startFSBird() {
+  clearInterval(activeInterval);
+  const canvas = document.getElementById('fsBirdCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  birdY = 130; birdVelocity = 0; pipes = [{x: 280, top: 80, bottom: 170}]; birdScore = 0;
+  document.getElementById('birdScore').innerText = `Score: ${birdScore}`;
+  activeInterval = setInterval(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    birdVelocity += 0.5; birdY += birdVelocity;
+    if(pipes.length === 0 || pipes[pipes.length - 1].x < 160) {
+      let topH = Math.floor(Math.random() * 100) + 30;
+      pipes.push({x: canvas.width, top: topH, bottom: topH + 90});
+    }
+    pipes.forEach(p => {
+      p.x -= 2.2;
+      ctx.fillStyle = '#00e5ff';
+      ctx.fillRect(p.x, 0, 34, p.top);
+      ctx.fillRect(p.x, p.bottom, 34, canvas.height - p.bottom);
+      if(p.x === 50) { birdScore += 10; document.getElementById('birdScore').innerText = `Score: ${birdScore}`; }
+      if(50 + 18 > p.x && 50 < p.x + 34 && (birdY < p.top || birdY + 14 > p.bottom)) {
+        clearInterval(activeInterval);
+        ctx.fillStyle = '#ff4757'; ctx.font = '16px sans-serif'; ctx.fillText('CRASHED!', 90, 130);
+      }
+    });
+    pipes = pipes.filter(p => p.x > -40);
+    if(birdY > canvas.height - 15 || birdY < 0) {
+      clearInterval(activeInterval);
+      ctx.fillStyle = '#ff4757'; ctx.font = '16px sans-serif'; ctx.fillText('CRASHED!', 90, 130);
+      return;
+    }
+    ctx.fillStyle = '#ff4b2b'; ctx.beginPath(); ctx.arc(55, birdY, 8, 0, Math.PI*2); ctx.fill();
+  }, 25);
+}
+function flapFSBird() { birdVelocity = -8; }
+
+let snake = [], food = {}, snakeDir = 'RIGHT', snakeScore = 0;
+function startFSSnake() {
+  clearInterval(activeInterval);
+  const canvas = document.getElementById('fsSnakeCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  snake = [{x: 90, y: 90}, {x: 80, y: 90}, {x: 70, y: 90}];
+  snakeDir = 'RIGHT'; snakeScore = 0;
+  document.getElementById('snakeScore').innerText = `Score: ${snakeScore}`;
+  spawnSnakeFood();
+  activeInterval = setInterval(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let head = {x: snake[0].x, y: snake[0].y};
+    if(snakeDir === 'UP') head.y -= 10;
+    if(snakeDir === 'DOWN') head.y += 10;
+    if(snakeDir === 'LEFT') head.x -= 10;
+    if(snakeDir === 'RIGHT') head.x += 10;
+    if(head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snake.some(s => s.x === head.x && s.y === head.y)) {
+      clearInterval(activeInterval);
+      ctx.fillStyle = '#ff4757'; ctx.font = '16px sans-serif'; ctx.fillText('GAME OVER', 80, 115);
+      return;
+    }
+    snake.unshift(head);
+    if(head.x === food.x && head.y === food.y) {
+      snakeScore += 10; document.getElementById('snakeScore').innerText = `Score: ${snakeScore}`;
+      spawnSnakeFood();
+    } else { snake.pop(); }
+    ctx.fillStyle = '#ff4b2b'; ctx.fillRect(food.x, food.y, 10, 10);
+    snake.forEach((part, idx) => {
+      ctx.fillStyle = idx === 0 ? '#00e5ff' : '#4082ff';
+      ctx.fillRect(part.x, part.y, 9, 9);
+    });
+  }, 120);
+}
+function spawnSnakeFood() {
+  food = { x: Math.floor(Math.random() * 24) * 10, y: Math.floor(Math.random() * 20) * 10 };
+}
+function setSnakeDir(dir) {
+  if(dir === 'UP' && snakeDir !== 'DOWN') snakeDir = 'UP';
+  if(dir === 'DOWN' && snakeDir !== 'UP') snakeDir = 'DOWN';
+  if(dir === 'LEFT' && snakeDir !== 'RIGHT') snakeDir = 'LEFT';
+  if(dir === 'RIGHT' && snakeDir !== 'LEFT') snakeDir = 'RIGHT';
+}
+
+/* Pure White 55% Size Normal Glow Starfield Engine */
+(() => {
+  const canvas = document.getElementById("stars");
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) return;
+  const universe = document.getElementById("universe");
+  const intro = document.getElementById("intro");
+  const credit = document.getElementById("credit");
+  const appInterface = document.getElementById("app-interface");
+  let w = 0, h = 0, cx = 0, cy = 0;
+  let stars = [], last = 0, animationId = 0, running = false, mode = "normal", modeStart = 0;
+  
+  const STAR_COUNT = 480;
+  let camRotX = 0, camRotY = 0, targetRotX = 0, targetRotY = 0, isPointerDown = false, startPointerX = 0, startPointerY = 0;
+
+  universe.addEventListener('pointerdown', (e) => {
+    isPointerDown = true;
+    startPointerX = e.clientX;
+    startPointerY = e.clientY;
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (!isPointerDown) return;
+    targetRotY = (e.clientX - startPointerX) * 0.003;
+    targetRotX = -(e.clientY - startPointerY) * 0.003;
+  });
+
+  window.addEventListener('pointerup', () => {
+    isPointerDown = false;
+    targetRotX = 0;
+    targetRotY = 0;
+  });
+
+  function resize() {
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth; h = window.innerHeight; cx = w / 2; cy = h / 2;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    createStars();
+  }
+  function createStars() {
+    stars = [];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({
+        x: (Math.random() * 2 - 1) * w,
+        y: (Math.random() * 2 - 1) * h,
+        z: Math.random() * 0.95 + 0.05,
+        size: (Math.random() * 0.7 + 0.35) * 0.55,
+        twinkleSpeed: Math.random() * 0.004 + 0.002,
+        twinklePhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  function resetStar(s) {
+    s.x = (Math.random() * 2 - 1) * w;
+    s.y = (Math.random() * 2 - 1) * h;
+    s.z = 1;
+    s.size = (Math.random() * 0.7 + 0.35) * 0.55;
+  }
+  
+  function draw(now) {
+    if (!running) return;
+    const dt = last ? Math.min((now - last) / 1000, 0.035) : 0.016;
+    last = now;
+    ctx.clearRect(0, 0, w, h);
+
+    camRotX += (targetRotX - camRotX) * 0.08;
+    camRotY += (targetRotY - camRotY) * 0.08;
+
+    let speed = 0.32 * globalSpeedMultiplier;
+    if (mode === "hyperspace") {
+      const t = Math.min((now - modeStart) / 1800, 1);
+      speed = (0.32 + 12 * t * t * (3 - 2 * t)) * globalSpeedMultiplier;
+    }
+
+    const cosY = Math.cos(camRotY), sinY = Math.sin(camRotY);
+    const cosX = Math.cos(camRotX), sinX = Math.sin(camRotX);
+
+    for (const s of stars) {
+      let rx = s.x * cosY - s.z * 100 * sinY;
+      let rz = s.x * sinY + s.z * 100 * cosY;
+      let ry = s.y * cosX - rz * sinX;
+
+      const x = cx + rx / (rz * 0.01 + 0.001);
+      const y = cy + ry / (rz * 0.01 + 0.001);
+
+      s.z -= speed * dt * 0.23;
+      if (s.z <= 0.035 || x < -50 || x > w + 50 || y < -50 || y > h + 50) { resetStar(s); continue; }
+      
+      const nx = cx + rx / (rz * 0.01 + 0.001);
+      const ny = cy + ry / (rz * 0.01 + 0.001);
+      
+      const baseAlpha = Math.min(1, 0.5 + (1 - s.z));
+      const twinkle = 0.85 + 0.3 * Math.sin(now * s.twinkleSpeed + s.twinklePhase);
+      const alpha = Math.min(1, baseAlpha * twinkle);
+      
+      const coreRadius = Math.max(0.4, (s.size / s.z) * (mode === "hyperspace" ? 1.15 : 1));
+
+      // Normal Soft White Glow Halo
+      ctx.globalAlpha = alpha * 0.3;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      ctx.beginPath();
+      ctx.arc(nx, ny, coreRadius + 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pure White Core
+      ctx.globalAlpha = Math.min(1, alpha * 1.1);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(nx, ny, coreRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    animationId = requestAnimationFrame(draw);
+  }
+  function start() { if (running) return; running = true; last = 0; animationId = requestAnimationFrame(draw); }
+  function stop() { running = false; cancelAnimationFrame(animationId); }
+
+  resize(); start();
+  window.addEventListener("resize", resize, { passive: true });
+  setTimeout(() => {
+    intro.classList.add("exit"); credit.classList.add("exit");
+    setTimeout(() => { mode = "hyperspace"; modeStart = performance.now(); }, 850);
+  }, 5000);
+  setTimeout(() => {
+    mode = "blackout"; universe.classList.add("blackout");
+    setTimeout(() => { stop(); ctx.clearRect(0, 0, w, h); universe.style.display = 'none'; appInterface.classList.add('visible'); }, 850);
+  }, 8500);
+})();
+</script>
+</body>
+</html>
